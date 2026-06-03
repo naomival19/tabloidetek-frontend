@@ -1,11 +1,10 @@
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
+import { useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import EditorRTE from "@/app/Componentes/EditorRTE";
 
-// Creamos un componente interno para manejar la lógica de los parámetros
-function EditarFormulario() {
+export default function Editar() {
   const searchParams = useSearchParams();
   const id = searchParams.get("id");
 
@@ -22,18 +21,20 @@ function EditarFormulario() {
   const [cargando, setCargando] = useState(true);
 
   useEffect(() => {
-    if (!id) {
-      setCargando(false);
-      return;
-    }
+    if (!id) return;
 
     const fetchArticulo = async () => {
       try {
-        const res = await fetch(`https://localhost:7095/General/GetEditarArticulo/${id}`);
+        const res = await fetch(
+          `https://localhost:7095/General/GetEditarArticulo/${id}`,
+        );
         if (!res.ok) throw new Error("Artículo no encontrado");
         const data = await res.json();
 
-        const fechaISO = new Date(data.fechaPublicacion).toISOString().slice(0, 16);
+        // Formato de hora local (datetime-local)
+        const fechaISO = new Date(data.fechaPublicacion)
+          .toISOString()
+          .slice(0, 16);
 
         setDatosArticulo({
           idArticulo: data.idArticulo,
@@ -55,25 +56,41 @@ function EditarFormulario() {
     fetchArticulo();
   }, [id]);
 
+  // Función para manejar el cambio en los inputs
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setDatosArticulo((prev) => ({ ...prev, [name]: value }));
+    setDatosArticulo((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
   };
 
+  // Función para manejar el cambio en el editor de contenido
   const handleContentChange = (newContent) => {
-    setDatosArticulo((prev) => ({ ...prev, contenido: newContent }));
+    setDatosArticulo((prev) => ({
+      ...prev,
+      contenido: newContent,
+    }));
   };
 
+  // Función para manejar el envío del formulario
   const handleSubmit = async (e) => {
     e.preventDefault();
+
     try {
-      const response = await fetch(`https://localhost:7095/General/ActualizarArticulo/${id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(datosArticulo),
-      });
+      const response = await fetch(
+        `https://localhost:7095/General/ActualizarArticulo/${id}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(datosArticulo),
+        },
+      );
 
       if (!response.ok) throw new Error("Error al guardar cambios");
+
       alert("Artículo actualizado correctamente");
     } catch (error) {
       console.error(error);
@@ -84,44 +101,80 @@ function EditarFormulario() {
   if (cargando) return <div className="container mt-4">Cargando...</div>;
 
   return (
-    <form onSubmit={handleSubmit}>
-      <div className="mb-3">
-        <label className="form-label">Categoría (ID)</label>
-        <input type="number" name="idCategoria" className="form-control" value={datosArticulo.idCategoria} onChange={handleChange} required />
-      </div>
-      <div className="mb-3">
-        <label className="form-label">Título</label>
-        <input type="text" name="tituloArticulo" className="form-control" value={datosArticulo.tituloArticulo} onChange={handleChange} required />
-      </div>
-      <div className="mb-3">
-        <label className="form-label">Contenido</label>
-        <EditorRTE value={datosArticulo.contenido} onChange={handleContentChange} />
-      </div>
-      <div className="mb-3">
-        <label className="form-label">Autor</label>
-        <input type="text" name="autor" className="form-control" value={datosArticulo.autor} onChange={handleChange} required />
-      </div>
-      <div className="mb-3">
-        <label className="form-label">Fecha de Publicación</label>
-        <input type="datetime-local" name="fechaPublicacion" className="form-control" value={datosArticulo.fechaPublicacion} onChange={handleChange} required />
-      </div>
-      <div className="mb-3">
-        <label className="form-label">URL (opcional)</label>
-        <input type="url" name="url" className="form-control" value={datosArticulo.url} onChange={handleChange} />
-      </div>
-      <button type="submit" className="btn btn-primary">Guardar Cambios</button>
-    </form>
-  );
-}
-
-// Exportamos el componente envuelto en Suspense
-export default function Editar() {
-  return (
     <div className="container mt-4">
       <h3>Editar Artículo</h3>
-      <Suspense fallback={<div>Cargando editor...</div>}>
-        <EditarFormulario />
-      </Suspense>
+      <form onSubmit={handleSubmit}>
+        <div className="mb-3">
+          <label className="form-label">Categoría (ID)</label>
+          <input
+            type="number"
+            name="idCategoria"
+            className="form-control"
+            value={datosArticulo.idCategoria}
+            onChange={handleChange}
+            required
+          />
+        </div>
+
+        <div className="mb-3">
+          <label className="form-label">Título</label>
+          <input
+            type="text"
+            name="tituloArticulo"
+            className="form-control"
+            value={datosArticulo.tituloArticulo}
+            onChange={handleChange}
+            required
+          />
+        </div>
+
+        <div className="mb-3">
+          <label className="form-label">Contenido</label>
+          <EditorRTE
+            value={datosArticulo.contenido}
+            onChange={handleContentChange}
+          />
+        </div>
+
+        <div className="mb-3">
+          <label className="form-label">Autor</label>
+          <input
+            type="text"
+            name="autor"
+            className="form-control"
+            value={datosArticulo.autor}
+            onChange={handleChange}
+            required
+          />
+        </div>
+
+        <div className="mb-3">
+          <label className="form-label">Fecha de Publicación</label>
+          <input
+            type="datetime-local"
+            name="fechaPublicacion"
+            className="form-control"
+            value={datosArticulo.fechaPublicacion}
+            onChange={handleChange}
+            required
+          />
+        </div>
+
+        <div className="mb-3">
+          <label className="form-label">URL (opcional)</label>
+          <input
+            type="url"
+            name="url"
+            className="form-control"
+            value={datosArticulo.url}
+            onChange={handleChange}
+          />
+        </div>
+
+        <button type="submit" className="btn btn-primary">
+          Guardar Cambios
+        </button>
+      </form>
     </div>
   );
 }
